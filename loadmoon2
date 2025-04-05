@@ -36,12 +36,14 @@ function TPReturner()
                 end
             end
 
+            -- Nếu player 'xitrum353' không có trong server, bỏ qua logic Full Moon và nhảy server khác
             if not playerFound then
                 print("❌ Player 'xitrum353' not found in the server. Hopping...")
                 Hop() -- Skip Full Moon and hop to a new server
                 return
             end
 
+            -- Nếu có player 'xitrum353', áp dụng logic Full Moon
             local TeleportService = game:GetService("TeleportService")
             local player = game.Players.LocalPlayer
             TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
@@ -90,9 +92,9 @@ function Teleport()
         local currentMoonPhase = GetMoonPhase()
 
         if currentMoonPhase == "Full Moon 🌕" then
-            SaveFullMoonServer()
+            SaveFullMoonServer() -- If it's Full Moon, save server info
         else
-            Hop()
+            Hop() -- If it's not Full Moon, hop to another server
         end
     end
 end
