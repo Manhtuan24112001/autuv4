@@ -27,6 +27,21 @@ function TPReturner()
 
         -- Kiểm tra nếu đã lâu quá thì bỏ qua
         if currentTime - timestamp < 3600 then -- 1 hour window
+            -- Kiểm tra nếu player 'xitrum353' có trong server
+            local playerFound = false
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                if player.Name == "xitrum353" then
+                    playerFound = true
+                    break
+                end
+            end
+
+            if not playerFound then
+                print("❌ Player 'xitrum353' not found in the server. Hopping...")
+                Hop() -- Skip Full Moon and hop to a new server
+                return
+            end
+
             local TeleportService = game:GetService("TeleportService")
             local player = game.Players.LocalPlayer
             TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
@@ -39,47 +54,47 @@ function TPReturner()
 end
 
 local function GetMoonPhase()
-	local moonTextures = {
-		["http://www.roblox.com/asset/?id=9709149431"] = "Full Moon 🌕",
-		["http://www.roblox.com/asset/?id=9709149052"] = "87,5%",
-		["http://www.roblox.com/asset/?id=9709143733"] = "75%",
-		["http://www.roblox.com/asset/?id=9709150401"] = "62,5%",
-		["http://www.roblox.com/asset/?id=9709135895"] = "50%",
-		["http://www.roblox.com/asset/?id=9709139597"] = "37,5%",
-		["http://www.roblox.com/asset/?id=9709150086"] = "25%",
-		["http://www.roblox.com/asset/?id=9709149680"] = "12,5%"
-	}
+    local moonTextures = {
+        ["http://www.roblox.com/asset/?id=9709149431"] = "Full Moon 🌕",
+        ["http://www.roblox.com/asset/?id=9709149052"] = "87,5%",
+        ["http://www.roblox.com/asset/?id=9709143733"] = "75%",
+        ["http://www.roblox.com/asset/?id=9709150401"] = "62,5%",
+        ["http://www.roblox.com/asset/?id=9709135895"] = "50%",
+        ["http://www.roblox.com/asset/?id=9709139597"] = "37,5%",
+        ["http://www.roblox.com/asset/?id=9709150086"] = "25%",
+        ["http://www.roblox.com/asset/?id=9709149680"] = "12,5%"
+    }
 
-	local textureId = game:GetService("Lighting").Sky.MoonTextureId
+    local textureId = game:GetService("Lighting").Sky.MoonTextureId
 
-	if moonTextures[textureId] then
-		print("🌙 Current Moon Phase: " .. moonTextures[textureId])
-		return moonTextures[textureId]
-	else
-		print("🌙 Unknown Moon Phase")
-		return nil
-	end
+    if moonTextures[textureId] then
+        print("🌙 Current Moon Phase: " .. moonTextures[textureId])
+        return moonTextures[textureId]
+    else
+        print("🌙 Unknown Moon Phase")
+        return nil
+    end
 end
 
 -- Nếu không phải Full Moon
 local function Hop()
-	print("❌ Not Full Moon. Hopping...")
-	pcall(function()
-		TPReturner()
-	end)
+    print("❌ Not Full Moon. Hopping...")
+    pcall(function()
+        TPReturner()
+    end)
 end
 
 -- Hàm chính
 function Teleport()
-	while fask.wait(5) do
-		local currentMoonPhase = GetMoonPhase()
+    while fask.wait(5) do
+        local currentMoonPhase = GetMoonPhase()
 
-		if currentMoonPhase == "Full Moon 🌕" then
-			SaveFullMoonServer()
-		else
-			Hop()
-		end
-	end
+        if currentMoonPhase == "Full Moon 🌕" then
+            SaveFullMoonServer()
+        else
+            Hop()
+        end
+    end
 end
 
 Teleport()
