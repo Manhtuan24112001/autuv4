@@ -1,83 +1,93 @@
 fask = task
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
-local actualHour = os.date("!*t").hour
 
--- Hàm kiểm tra pha mặt trăng
-local function GetMoonPhase()
-	local moonTextures = {
-		["http://www.roblox.com/asset/?id=9709149431"] = "Full Moon 🌕",
-		["http://www.roblox.com/asset/?id=9709149052"] = "87,5%",
-		["http://www.roblox.com/asset/?id=9709143733"] = "75%",
-		["http://www.roblox.com/asset/?id=9709150401"] = "62,5%",
-		["http://www.roblox.com/asset/?id=9709135895"] = "50%",
-		["http://www.roblox.com/asset/?id=9709139597"] = "37,5%",
-		["http://www.roblox.com/asset/?id=9709150086"] = "25%",
-		["http://www.roblox.com/asset/?id=9709149680"] = "12,5%"
-	}
-
-	local textureId = game:GetService("Lighting").Sky.MoonTextureId
-	if moonTextures[textureId] then
-		print("🌙 Pha mặt trăng hiện tại: " .. moonTextures[textureId])
-		if textureId == "http://www.roblox.com/asset/?id=9709149431" or -- Full Moon
-		   textureId == "http://www.roblox.com/asset/?id=9709149052" or -- 87.5%
-		   textureId == "http://www.roblox.com/asset/?id=9709143733" then -- 75%
-			return "Full Moon 🌕"
-		end
-		return moonTextures[textureId]
-	else
-		print("🌙 Không xác định được pha mặt trăng")
-		return nil
-	end
-end
-
-function TPFromSavedJob()
-	local success, content = pcall(function()
-		return readfile("helpfullmoon.json")
-	end)
-
-	if success and content and content ~= "" then
-		local data = HttpService:JSONDecode(content)
-		if typeof(data) == "table" and #data > 0 then
-			local job = data[1]
-			local jobId = tostring(job.jobId)
-			local playerCount = tonumber(job.playerCount or 0)
-			local maxPlayers = 12
-
-			-- Kiểm tra Full Moon
-			local moonPhase = GetMoonPhase()
-
-			if playerCount < maxPlayers and moonPhase == "Full Moon 🌕" then
-				print("✅ Đang tiến hành join server Full Moon...")
-				fask.wait()
-
-				-- Xóa dữ liệu trong helpfullmoon.json sau khi đã teleport
-				writefile("helpfullmoon.json", HttpService:JSONEncode({}))
-
-				pcall(function()
-					local args = {
-						[1] = "teleport",
-						[2] = jobId
-					}
-					game:GetService("ReplicatedStorage").__ServerBrowser:InvokeServer(unpack(args))
-				end)
-
-				fask.wait(0.5)
-			else
-				print("⏩ Bỏ qua do không phải Full Moon hoặc server đã vào.")
-			end
-		else
-			warn("⚠️ Dữ liệu trong helpfullmoon.json không hợp lệ.")
-		end
-	else
-		warn("❌ Không thể đọc file helpfullmoon.json.")
-	end
-end
-
--- Gọi liên tục để kiểm tra và join nếu phù hợp
-fask.spawn(function()
-	while true do
-		pcall(TPFromSavedJob)
-		fask.wait(5)
-	end
+-- Đọc file helpfullmoon.json
+local AllJobIds = {}
+local success = pcall(function()
+    AllJobIds = HttpService:JSONDecode(readfile("helpfullmoon.json"))
 end)
+
+if not success then
+    print("❌ Failed to load helpfullmoon.json or file is empty.")
+    return
+end
+
+local fullMoonFound = false -- Để theo dõi xem Full Moon đã được tìm thấy chưa
+
+-- Lấy server từ helpfullmoon.json
+function TPReturner()
+    if #AllJobIds == 0 then
+        print("❌ No Full Moon servers found in helpfullmoon.json.")
+        return
+    end
+
+    for _, server in pairs(AllJobIds) do
+        local jobId = tostring(server.jobId)
+        local placeId = server.placeId
+        local timestamp = server.timestamp
+        local currentTime = os.time()
+
+        -- Kiểm tra nếu đã lâu quá thì bỏ qua
+        if currentTime - timestamp < 3600 then -- 1 hour window
+            local TeleportService = game:GetService("TeleportService")
+            local player = game.Players.LocalPlayer
+            TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+            print("🔔 Teleporting to Full Moon server: " .. jobId)
+            fullMoonFound = true -- Đánh dấu đã tìm thấy Full Moon, không teleport nữa
+            return
+        else
+            print("❌ Full Moon server is outdated (over 1 hour). Skipping...")
+        end
+    end
+end
+
+-- Lấy pha mặt trăng
+local function GetMoonPhase()
+    local moonTextures = {
+        ["http://www.roblox.com/asset/?id=9709149431"] = "Full Moon 🌕",
+        ["http://www.roblox.com/asset/?id=9709149052"] = "87,5%",
+        ["http://www.roblox.com/asset/?id=9709143733"] = "75%",
+        ["http://www.roblox.com/asset/?id=9709150401"] = "62,5%",
+        ["http://www.roblox.com/asset/?id=9709135895"] = "50%",
+        ["http://www.roblox.com/asset/?id=9709139597"] = "37,5%",
+        ["http://www.roblox.com/asset/?id=9709150086"] = "25%",
+        ["http://www.roblox.com/asset/?id=9709149680"] = "12,5%"
+    }
+
+    local textureId = game:GetService("Lighting").Sky.MoonTextureId
+
+    if moonTextures[textureId] then
+        print("🌙 Current Moon Phase: " .. moonTextures[textureId])
+        return moonTextures[textureId]
+    else
+        print("🌙 Unknown Moon Phase")
+        return nil
+    end
+end
+
+-- Nếu không phải Full Moon
+local function Hop()
+    if not fullMoonFound then
+        print("❌ Not Full Moon. Hopping...")
+        pcall(function()
+            TPReturner()
+        end)
+    end
+end
+
+-- Hàm chính
+function Teleport()
+    while fask.wait(5) do
+        local currentMoonPhase = GetMoonPhase()
+
+        if currentMoonPhase ~= "Full Moon 🌕" then
+            if not fullMoonFound then
+                TPReturner() -- Tự động teleport nếu Full Moon
+            end
+        else
+            Hop() -- Nếu không phải Full Moon, tìm server mới
+        end
+    end
+end
+
+Teleport()
