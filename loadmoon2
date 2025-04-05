@@ -1,5 +1,6 @@
 fask = task
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
 
 -- Đọc file helpfullmoon.json
 local AllJobIds = {}
@@ -10,6 +11,16 @@ end)
 if not success then
     print("❌ Failed to load helpfullmoon.json or file is empty.")
     return
+end
+
+-- Kiểm tra xem player 'xitrum353' có trong server không
+local function isPlayerInServer(playerName)
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Name == playerName then
+            return true
+        end
+    end
+    return false
 end
 
 -- Lấy server từ helpfullmoon.json
@@ -28,13 +39,7 @@ function TPReturner()
         -- Kiểm tra nếu đã lâu quá thì bỏ qua
         if currentTime - timestamp < 3600 then -- 1 hour window
             -- Kiểm tra nếu player 'xitrum353' có trong server
-            local playerFound = false
-            for _, player in ipairs(game.Players:GetPlayers()) do
-                if player.Name == "xitrum353" then
-                    playerFound = true
-                    break
-                end
-            end
+            local playerFound = isPlayerInServer("xitrum353")
 
             -- Nếu player 'xitrum353' không có trong server, bỏ qua logic Full Moon và nhảy server khác
             if not playerFound then
@@ -86,17 +91,20 @@ local function Hop()
     end)
 end
 
--- Hàm chính
-function Teleport()
-    while fask.wait(5) do
-        local currentMoonPhase = GetMoonPhase()
+-- Quét liên tục xem có player 'xitrum353' trong server không
+while true do
+    wait(5)  -- Quét mỗi 5 giây
+    local currentMoonPhase = GetMoonPhase()
 
-        if currentMoonPhase == "Full Moon 🌕" then
-            SaveFullMoonServer() -- If it's Full Moon, save server info
+    if currentMoonPhase == "Full Moon 🌕" then
+        -- Kiểm tra lại nếu player 'xitrum353' có trong server không
+        if isPlayerInServer("xitrum353") then
+            SaveFullMoonServer() -- Nếu có player 'xitrum353' và là Full Moon, lưu server
         else
-            Hop() -- If it's not Full Moon, hop to another server
+            print("❌ Player 'xitrum353' not found. Hopping to another server...")
+            Hop() -- Nếu không có player 'xitrum353', nhảy server khác
         end
+    else
+        Hop() -- Nếu không phải Full Moon, nhảy server khác
     end
 end
-
-Teleport()
