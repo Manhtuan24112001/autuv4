@@ -38,49 +38,48 @@ function TPReturner()
     end
 end
 
--- Lấy pha mặt trăng
 local function GetMoonPhase()
-    local moonTextures = {
-        ["http://www.roblox.com/asset/?id=9709149431"] = "Full Moon 🌕",
-        ["http://www.roblox.com/asset/?id=9709149052"] = "87,5%",
-        ["http://www.roblox.com/asset/?id=9709143733"] = "75%",
-        ["http://www.roblox.com/asset/?id=9709150401"] = "62,5%",
-        ["http://www.roblox.com/asset/?id=9709135895"] = "50%",
-        ["http://www.roblox.com/asset/?id=9709139597"] = "37,5%",
-        ["http://www.roblox.com/asset/?id=9709150086"] = "25%",
-        ["http://www.roblox.com/asset/?id=9709149680"] = "12,5%"
-    }
+	local moonTextures = {
+		["http://www.roblox.com/asset/?id=9709149431"] = "Full Moon 🌕",
+		["http://www.roblox.com/asset/?id=9709149052"] = "87,5%",
+		["http://www.roblox.com/asset/?id=9709143733"] = "75%",
+		["http://www.roblox.com/asset/?id=9709150401"] = "62,5%",
+		["http://www.roblox.com/asset/?id=9709135895"] = "50%",
+		["http://www.roblox.com/asset/?id=9709139597"] = "37,5%",
+		["http://www.roblox.com/asset/?id=9709150086"] = "25%",
+		["http://www.roblox.com/asset/?id=9709149680"] = "12,5%"
+	}
 
-    local textureId = game:GetService("Lighting").Sky.MoonTextureId
+	local textureId = game:GetService("Lighting").Sky.MoonTextureId
 
-    if moonTextures[textureId] then
-        print("🌙 Current Moon Phase: " .. moonTextures[textureId])
-        return moonTextures[textureId]
-    else
-        print("🌙 Unknown Moon Phase")
-        return nil
-    end
+	if moonTextures[textureId] then
+		print("🌙 Current Moon Phase: " .. moonTextures[textureId])
+		return moonTextures[textureId]
+	else
+		print("🌙 Unknown Moon Phase")
+		return nil
+	end
 end
 
--- Nếu không phải Full Moon, thực hiện teleport
+-- Nếu không phải Full Moon
 local function Hop()
-    print("❌ Not Full Moon. Hopping...")
-    pcall(function()
-        TPReturner()
-    end)
+	print("❌ Not Full Moon. Hopping...")
+	pcall(function()
+		TPReturner()
+	end)
 end
 
 -- Hàm chính
 function Teleport()
-    while fask.wait(5) do
-        local currentMoonPhase = GetMoonPhase()
+	while fask.wait(5) do
+		local currentMoonPhase = GetMoonPhase()
 
-        if currentMoonPhase == "Full Moon 🌕" then
-            print("🌕 Full Moon detected! No need to hop.")
-        else
-            Hop() -- Nếu không phải Full Moon, tìm server mới
-        end
-    end
+		if currentMoonPhase == "Full Moon 🌕" then
+			SaveFullMoonServer()
+		else
+			Hop()
+		end
+	end
 end
 
 Teleport()
