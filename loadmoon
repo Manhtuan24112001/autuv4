@@ -5,7 +5,7 @@ local actualHour = os.date("!*t").hour
 
 -- Đọc file tránh trùng lặp JobId
 local success = pcall(function()
-	AllIDs = HttpService:JSONDecode(readfile("NotSameServers2.json"))
+	AllIDs = HttpService:JSONDecode(readfile("NotSameServers.json"))
 end)
 
 if not success then
