@@ -6,12 +6,12 @@ local actualHour = os.date("!*t").hour
 
 -- Đọc lịch sử server đã vào
 local success = pcall(function()
-	AllIDs = HttpService:JSONDecode(readfile("NotSameServers2.json"))
+	AllIDs = HttpService:JSONDecode(readfile("Gomoonsever.json"))
 end)
 
 if not success then
 	table.insert(AllIDs, actualHour)
-	writefile("NotSameServers2.json", HttpService:JSONEncode(AllIDs))
+	writefile("Gomoonsever.json", HttpService:JSONEncode(AllIDs))
 end
 
 -- Hàm kiểm tra pha mặt trăng
@@ -80,7 +80,7 @@ function TPFromSavedJob()
 				fask.wait()
 
 				pcall(function()
-					writefile("NotSameServers2.json", HttpService:JSONEncode(AllIDs))
+					writefile("Gomoonsever.json", HttpService:JSONEncode(AllIDs))
 					fask.wait()
 
 					local args = {
