@@ -57,7 +57,7 @@ function TPReturner()
 			num = num + 1
 		end
 
-		if isNew and playerCount < maxPlayers then
+		if isNew and playerCount < 5 then  -- Change condition here to check if playerCount < 5
 			table.insert(AllIDs, jobId)
 			fask.wait()
 
