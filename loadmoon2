@@ -12,8 +12,6 @@ if not success then
     return
 end
 
-local fullMoonFound = false -- Để theo dõi xem Full Moon đã được tìm thấy chưa
-
 -- Lấy server từ helpfullmoon.json
 function TPReturner()
     if #AllJobIds == 0 then
@@ -33,8 +31,7 @@ function TPReturner()
             local player = game.Players.LocalPlayer
             TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
             print("🔔 Teleporting to Full Moon server: " .. jobId)
-            fullMoonFound = true -- Đánh dấu đã tìm thấy Full Moon, không teleport nữa
-            return
+            return -- Teleported, stop the function
         else
             print("❌ Full Moon server is outdated (over 1 hour). Skipping...")
         end
@@ -65,14 +62,12 @@ local function GetMoonPhase()
     end
 end
 
--- Nếu không phải Full Moon
+-- Nếu không phải Full Moon, thực hiện teleport
 local function Hop()
-    if not fullMoonFound then
-        print("❌ Not Full Moon. Hopping...")
-        pcall(function()
-            TPReturner()
-        end)
-    end
+    print("❌ Not Full Moon. Hopping...")
+    pcall(function()
+        TPReturner()
+    end)
 end
 
 -- Hàm chính
@@ -80,10 +75,8 @@ function Teleport()
     while fask.wait(5) do
         local currentMoonPhase = GetMoonPhase()
 
-        if currentMoonPhase ~= "Full Moon 🌕" then
-            if not fullMoonFound then
-                TPReturner() -- Tự động teleport nếu Full Moon
-            end
+        if currentMoonPhase == "Full Moon 🌕" then
+            print("🌕 Full Moon detected! No need to hop.")
         else
             Hop() -- Nếu không phải Full Moon, tìm server mới
         end
