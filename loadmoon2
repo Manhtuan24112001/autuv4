@@ -1,18 +1,7 @@
 fask = task
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
-local AllIDs = {}
 local actualHour = os.date("!*t").hour
-
--- Đọc lịch sử server đã vào
-local success = pcall(function()
-	AllIDs = HttpService:JSONDecode(readfile("Gomoonsever.json"))
-end)
-
-if not success then
-	table.insert(AllIDs, actualHour)
-	writefile("Gomoonsever.json", HttpService:JSONEncode(AllIDs))
-end
 
 -- Hàm kiểm tra pha mặt trăng
 local function GetMoonPhase()
@@ -30,6 +19,11 @@ local function GetMoonPhase()
 	local textureId = game:GetService("Lighting").Sky.MoonTextureId
 	if moonTextures[textureId] then
 		print("🌙 Pha mặt trăng hiện tại: " .. moonTextures[textureId])
+		if textureId == "http://www.roblox.com/asset/?id=9709149431" or -- Full Moon
+		   textureId == "http://www.roblox.com/asset/?id=9709149052" or -- 87.5%
+		   textureId == "http://www.roblox.com/asset/?id=9709143733" then -- 75%
+			return "Full Moon 🌕"
+		end
 		return moonTextures[textureId]
 	else
 		print("🌙 Không xác định được pha mặt trăng")
@@ -47,42 +41,20 @@ function TPFromSavedJob()
 		if typeof(data) == "table" and #data > 0 then
 			local job = data[1]
 			local jobId = tostring(job.jobId)
-			local placeId = tonumber(job.placeId)
 			local playerCount = tonumber(job.playerCount or 0)
 			local maxPlayers = 12
-
-			local isNew = true
-			local num = 0
-
-			for _, existing in pairs(AllIDs) do
-				if num ~= 0 then
-					if jobId == tostring(existing) then
-						isNew = false
-					end
-				else
-					if tonumber(actualHour) ~= tonumber(existing) then
-						pcall(function()
-							delfile("NotSameServers2.json")
-							AllIDs = {}
-							table.insert(AllIDs, actualHour)
-						end)
-					end
-				end
-				num = num + 1
-			end
 
 			-- Kiểm tra Full Moon
 			local moonPhase = GetMoonPhase()
 
-			if isNew and playerCount < maxPlayers and moonPhase == "Full Moon 🌕" then
+			if playerCount < maxPlayers and moonPhase == "Full Moon 🌕" then
 				print("✅ Đang tiến hành join server Full Moon...")
-				table.insert(AllIDs, jobId)
 				fask.wait()
 
-				pcall(function()
-					writefile("Gomoonsever.json", HttpService:JSONEncode(AllIDs))
-					fask.wait()
+				-- Xóa dữ liệu trong helpfullmoon.json sau khi đã teleport
+				writefile("helpfullmoon.json", HttpService:JSONEncode({}))
 
+				pcall(function()
 					local args = {
 						[1] = "teleport",
 						[2] = jobId
