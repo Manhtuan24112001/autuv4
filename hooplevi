@@ -1,0 +1,18 @@
+spawn(function()
+    pcall(function()
+        local placeId = game.PlaceId
+        if placeId == 7449423635 then  -- Check if we're in the correct game
+            local player = game.Players.LocalPlayer
+            if player then
+                local playerName = player.Name
+                if playerName == "xitrum353" then
+                    -- 🔁 Main account logic: Load Full Moon server finder
+                    loadstring(game:HttpGet("https://raw.githubusercontent.com/Manhtuan24112001/autuv4/refs/heads/main/svlevi"))()
+                else
+                    -- 🔁 Alt account logic: Help join Full Moon server
+                    loadstring(game:HttpGet("https://raw.githubusercontent.com/Manhtuan24112001/autuv4/refs/heads/main/loadmoon2"))()
+                end
+            end
+        end
+    end)
+end)
