@@ -1,0 +1,143 @@
+local fask = task
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local AllIDs = {}
+local actualHour = os.date("!*t").hour
+local hopInterval = 3 * 60 * 60 -- 3 tiếng
+local lastHopTime = 0
+local selectedServer = false
+
+-- Đọc file tránh trùng lặp JobId
+local success = pcall(function()
+	AllIDs = HttpService:JSONDecode(readfile("moonsever.json"))
+end)
+
+if not success then
+	table.insert(AllIDs, actualHour)
+	writefile("moonsever.json", HttpService:JSONEncode(AllIDs))
+end
+
+-- Đọc thời gian gần nhất từ helpfullmoon.json
+local function LoadLastHopTime()
+	local ok, data = pcall(function()
+		return HttpService:JSONDecode(readfile("helpfullmoon.json"))
+	end)
+	if ok and data and data[1] and data[1].timestamp then
+		lastHopTime = tonumber(data[1].timestamp)
+		return true
+	else
+		lastHopTime = os.time()
+		return false
+	end
+end
+
+-- Lưu server hiện tại vào helpfullmoon.json
+local function SaveChosenServer()
+	local serverInfo = {
+		jobId = game.JobId,
+		placeId = game.PlaceId,
+		timestamp = os.time()
+	}
+	writefile("helpfullmoon.json", HttpService:JSONEncode({serverInfo}))
+	print("✅ Đã lưu server vào helpfullmoon.json. Bắt đầu tính 3 tiếng từ bây giờ.")
+	lastHopTime = serverInfo.timestamp
+end
+
+-- Hop sang server ít người nhất (dưới 5)
+local function TPReturner()
+	local response = game:HttpGet("http://localhost:3000/JobData/full-moon")
+	local data = HttpService:JSONDecode(response)
+
+	for _, job in pairs(data.jobs) do
+		local jobId = tostring(job.jobId)
+		local playerCount = tonumber(job.playerCount) or 0
+
+		local isNew = true
+		local num = 0
+
+		for _, existing in pairs(AllIDs) do
+			if num ~= 0 then
+				if jobId == tostring(existing) then
+					isNew = false
+				end
+			else
+				if tonumber(actualHour) ~= tonumber(existing) then
+					pcall(function()
+						delfile("moonsever.json")
+						AllIDs = {}
+						table.insert(AllIDs, actualHour)
+					end)
+				end
+			end
+			num = num + 1
+		end
+
+		if isNew and playerCount < 5 then
+			table.insert(AllIDs, jobId)
+			fask.wait()
+
+			pcall(function()
+				writefile("moonsever.json", HttpService:JSONEncode(AllIDs))
+				fask.wait()
+				TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, Players.LocalPlayer)
+			end)
+
+			fask.wait(0.5)
+			break
+		end
+	end
+end
+
+-- Kiểm tra server ngay sau khi vào
+local function InitialCheck()
+	fask.delay(5, function()
+		if not selectedServer then
+			local currentPlayers = #Players:GetPlayers()
+			print("👥 Số người trong server hiện tại:", currentPlayers)
+
+			if currentPlayers > 5 then
+				print("❌ Server quá đông, đang tìm server khác...")
+				TPReturner()
+			else
+				print("✅ Server ổn, dưới 5 người.")
+				selectedServer = true
+				SaveChosenServer()
+			end
+		end
+	end)
+end
+
+-- Kiểm tra định kỳ mỗi 1 phút xem đã đến lúc hop chưa
+local function AutoHopTimer()
+	while true do
+		fask.wait(60) -- mỗi phút kiểm tra 1 lần
+
+		if selectedServer then
+			local elapsed = os.time() - lastHopTime
+			local remaining = hopInterval - elapsed
+
+			if remaining <= 0 then
+				print("⏰ Đã đủ 3 tiếng. Đang hop server mới...")
+				selectedServer = false
+				TPReturner()
+				break
+			else
+				local minutes = math.floor(remaining / 60)
+				local seconds = remaining % 60
+				print(string.format("⌛ Còn %d phút %d giây nữa sẽ hop...", minutes, seconds))
+			end
+		end
+	end
+end
+
+-- Bắt đầu chương trình
+local hasPreviousTime = LoadLastHopTime()
+InitialCheck()
+
+if hasPreviousTime then
+	AutoHopTimer()
+else
+	print("🕒 Đây là lần đầu chọn server hoặc file trống. Bắt đầu tính từ bây giờ.")
+end
