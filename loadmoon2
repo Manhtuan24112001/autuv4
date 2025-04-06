@@ -55,6 +55,6 @@ end
 
 -- Quét liên tục xem có player 'xitrum353' trong server không và nhảy server nếu cần
 while true do
-    wait(5)  -- Quét mỗi 5 giây
+    wait(30)  -- Quét mỗi 5 giây
     CheckAndHop()
 end
